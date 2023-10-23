@@ -3,7 +3,6 @@ package main
 
 import (
 	"testing"
-	//"github.com/fatih/color"
 )
 
 func TestColorizeText(t *testing.T) {

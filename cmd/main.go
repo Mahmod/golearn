@@ -3,15 +3,16 @@ package main
 
 import (
     "log"
-    "google.golang.org/protobuf/proto"
+    "github.com/golang/protobuf/proto"
     clientanalytics "metrics/log/event"
 	"time"
 )
 
 const (
+	//TODO: change it to appropriate clearcut value
 	ClientTypeValue   = 1
 	LogSourceValue    = 2
-	//LogSourceNameValue = "log_source_name"
+	LogSourceNameValue = "cvdr"
 )
 
 func currentTimeMillis() int64 {
@@ -36,7 +37,7 @@ func encodeLogRequest(extension string) ([]byte, error) {
 		LogSource:     proto.Int32(LogSourceValue),
 		RequestTimeMs: proto.Int64(currentTimeMs),
 		LogEvent:      []*clientanalytics.LogEvent{logEvent},
-		//LogSourceName: proto.String(LogSourceNameValue),
+		LogSourceName: proto.String(LogSourceNameValue),
 	}
 
 	return proto.Marshal(req)
