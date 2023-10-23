@@ -11,6 +11,10 @@ import (
 	"time"
 	"github.com/google/uuid"
 	"strings"
+	"net/http"
+	"bytes"
+	"io/ioutil"
+	"errors"
 )
 
 const (
@@ -87,6 +91,52 @@ func createAndEncodeAtestLogEventInternal(commandLine string) ([]byte, error) {
 	return proto.Marshal(logEvent)
 }
 
+// ClearcutServer represents the Clearcut server.
+type ClearcutServer int
+
+// Enum values for ClearcutServer
+const (
+	Local ClearcutServer = iota + 1
+	Staging
+	Prod
+)
+
+// clearcutServerUrl returns the URL of the Clearcut server based on the given server type.
+func clearcutServerUrl(server ClearcutServer) string {
+	switch server {
+	case Local:
+		return "http://localhost:27910/log"
+	case Staging:
+		return "https://play.googleapis.com:443/staging/log"
+	case Prod:
+		return "https://play.googleapis.com:443/log"
+	default:
+		log.Fatal("Invalid host configuration")
+		return ""
+	}
+}
+
+func postRequest(output []byte, server ClearcutServer) (error) {
+	clearcutURL := clearcutServerUrl(server)
+
+	resp, err := http.Post(clearcutURL, "application/json", bytes.NewBuffer(output))
+	if err != nil {
+		log.Printf("Failed to initialize HTTP request: %v", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		log.Printf("Metrics message failed: %s", string(output))
+		log.Printf("HTTP error code: %d", resp.StatusCode)
+		log.Printf("HTTP response body: %s", string(body))
+		return errors.New("metrics message failed")
+	}
+
+	log.Println("Metrics posted to ClearCut")
+	return nil
+}
 
 func main() {
 	log.Printf("-----------------------------------")
@@ -103,4 +153,7 @@ func main() {
     }
 	log.Printf("Encoded Log Event: %v", encoded)
     log.Printf("Encoded data: %v", data)
+	
+	//Pass the encoded data to the postRequest function
+	postRequest(data, Prod)
 }
