@@ -111,13 +111,13 @@ func clearcutServerUrl(server ClearcutServer) string {
 	case Prod:
 		return "https://play.googleapis.com:443/log"
 	default:
-		log.Fatal("Invalid host configuration")
+		log.Println("Invalid host configuration")
 		return ""
 	}
 }
 
 func postRequest(output []byte) (error) {
-	clearcutURL := clearcutServerUrl(Prod)
+	clearcutURL := clearcutServerUrl(Local)
 
 	resp, err := http.Post(clearcutURL, "application/json", bytes.NewBuffer(output))
 	if err != nil {
@@ -138,10 +138,7 @@ func postRequest(output []byte) (error) {
 	return nil
 }
 
-func main() {
-	log.Printf("-----------------------------------")
-	log.Printf("Welcome to the Cuttlefish Metrics!")
-	commandLine := strings.Join(os.Args, " ")
+func sendLaunchCommand(commandLine string) (error) {
 	log.Printf("Command Line: %v", commandLine)
 	encoded, err := createAndEncodeAtestLogEventInternal(commandLine)
 	if err != nil {
@@ -150,11 +147,28 @@ func main() {
 	//Pass the encoded log event to the encodeLogRequest function
     data, err := encodeLogRequest(encoded)
     if err != nil {
-        log.Fatal("Marshaling error: ", err)
+        log.Println("Marshaling error: ", err)
     }
 	//log.Printf("Encoded Log Event: %v", encoded)
     //log.Printf("Encoded data: %v", data)
 	
 	//Pass the encoded data to the postRequest function
-	postRequest(data)
+	err = postRequest(data)
+
+	if err != nil {
+		log.Println("Failed to post request: ", err)
+		return err
+	}
+	return nil
+}
+
+func main() {
+	log.Printf("-----------------------------------")
+	log.Printf("Welcome to the Cuttlefish Metrics!")
+	commandLine := strings.Join(os.Args, " ")
+	err := sendLaunchCommand(commandLine)
+	if err != nil {
+		log.Println("Failed to send launch command to metrics server: ", err)
+	}
+
 }
