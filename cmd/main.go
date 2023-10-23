@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	//TODO: change it to appropriate clearcut value
-	ClientTypeValue   = 1
-	LogSourceValue    = 2
-	LogSourceNameValue = "cuttlefish"
+	//Refernce google3/wireless/android/play/playlog/proto/clientanalytics.proto
+	ClientTypeValue   = 16
+	LogSourceValue    = 971
+	LogSourceNameValue = "CUTTLEFISH_METRICS"
 )
 
 func currentTimeMillis() int64 {
@@ -116,8 +116,8 @@ func clearcutServerUrl(server ClearcutServer) string {
 	}
 }
 
-func postRequest(output []byte, server ClearcutServer) (error) {
-	clearcutURL := clearcutServerUrl(server)
+func postRequest(output []byte) (error) {
+	clearcutURL := clearcutServerUrl(Prod)
 
 	resp, err := http.Post(clearcutURL, "application/json", bytes.NewBuffer(output))
 	if err != nil {
@@ -142,6 +142,7 @@ func main() {
 	log.Printf("-----------------------------------")
 	log.Printf("Welcome to the Cuttlefish Metrics!")
 	commandLine := strings.Join(os.Args, " ")
+	log.Printf("Command Line: %v", commandLine)
 	encoded, err := createAndEncodeAtestLogEventInternal(commandLine)
 	if err != nil {
 		log.Fatalf("Failed to encode log event: %v", err)
@@ -151,9 +152,9 @@ func main() {
     if err != nil {
         log.Fatal("Marshaling error: ", err)
     }
-	log.Printf("Encoded Log Event: %v", encoded)
-    log.Printf("Encoded data: %v", data)
+	//log.Printf("Encoded Log Event: %v", encoded)
+    //log.Printf("Encoded data: %v", data)
 	
 	//Pass the encoded data to the postRequest function
-	postRequest(data, Prod)
+	postRequest(data)
 }
