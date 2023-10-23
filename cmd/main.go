@@ -2,34 +2,38 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"google.golang.org/protobuf/proto"
-	clientanalytics "metrics/log/event"
+    "log"
+    "google.golang.org/protobuf/proto"
+    clientanalytics "metrics/log/event"
 )
 
-func main() {
-	fmt.Println("Welcome to the Cuttlefish Metrics!")
+func encodeLogRequest(extension string) ([]byte, error) {
 	clientInfo := &clientanalytics.ClientInfo{
 		ClientType: proto.Int32(1),
 	}
 
 	logEvent := &clientanalytics.LogEvent{
-		EventTimeMs:      proto.Int64(1234567890),
-		SourceExtension:  []byte("some source extension"),
+		EventTimeMs:      proto.Int64(1625140123456),
+		SourceExtension:  []byte(extension),
 	}
 
-	logRequest := &clientanalytics.LogRequest{
+    req := &clientanalytics.LogRequest{
 		ClientInfo:    clientInfo,
 		LogSource:     proto.Int32(2),
-		RequestTimeMs: proto.Int64(1234567890123),
+		RequestTimeMs: proto.Int64(1625140123456),
 		LogEvent:      []*clientanalytics.LogEvent{logEvent},
-	}
-	
-	data, err := proto.Marshal(logRequest)
-	if err != nil {
-		log.Fatalf("Failed to encode LogRequest: %v", err)
+		//TODO: add --> LogSourceName: proto.String("log_source_name"),
 	}
 
-	log.Printf("Encoded LogRequest: %v", data)
+    return proto.Marshal(req)
+}
+
+func main() {
+	log.Printf("Welcome to the Cuttlefish Metrics!")
+    extension := "source_extension"
+    data, err := encodeLogRequest(extension)
+    if err != nil {
+        log.Fatal("Marshaling error: ", err)
+    }
+    log.Printf("Encoded data: %v", data)
 }

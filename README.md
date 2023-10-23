@@ -25,4 +25,10 @@ sudo apt install golang-goprotobuf-dev
 - Generate Go Code from Protobuf
 ```
 protoc --go_out=. --go_opt=paths=source_relative internal_user_log.proto
+protoc --go_out=. --go_opt=paths=source_relative clientanalytics.proto
+```
+
+- run command 
+```
+go run cmd/main.go
 ```
