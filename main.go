@@ -11,6 +11,10 @@ func colorizeText(text string) string {
 	return c.Sprint(text)
 }
 
+func Metricsmain() {
+	fmt.Println(colorizeText("Welcome to the Cuttlefish Metrics!"))
+}
+
 func main() {
-	fmt.Println("Hello, Go with dependencies!")
+	Metricsmain()
 }

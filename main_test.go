@@ -16,3 +16,5 @@ func TestColorizeText(t *testing.T) {
 		t.Errorf("Expected %s but got %s", expected, coloredText)
 	}
 }
+func TestMetricsMain(t *testing.T) {
+}
