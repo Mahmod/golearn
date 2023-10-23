@@ -6,7 +6,11 @@ import (
     "github.com/golang/protobuf/proto"
     clientanalytics "metrics/log/event"
 	internal_user_log "metrics/log/atest"
+	"runtime"
+	"os"
 	"time"
+	"github.com/google/uuid"
+	"strings"
 )
 
 const (
@@ -45,12 +49,7 @@ func encodeLogRequest(extension string) ([]byte, error) {
 }
 
 const (
-	UserKey       = "some-user-key"
-	RunID         = "some-run-id"
 	ToolName      = "cvdr"
-	CommandLine   = "some-command"
-	Cwd           = "some-directory"
-	Os            = "Linux"
 )
 
 var (
@@ -63,17 +62,26 @@ func encodeAtestLogEventInternal(logEvent *internal_user_log.AtestLogEventIntern
 	return proto.Marshal(logEvent)
 }
 
-func createAtestLogEventInternal() *internal_user_log.AtestLogEventInternal {
+func createAtestLogEventInternal(commandLine string) *internal_user_log.AtestLogEventInternal {
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current working directory: %v", err)
+	}
+	log.Printf("cwd = %v", cwd)
+	// Generate UUIDs for UserKey and RunID
+	userKey := uuid.New().String()
+	runID := uuid.New().String()
+
 	atestStartEvent := &internal_user_log.AtestLogEventInternal_AtestStartEvent{
-		CommandLine:    proto.String(CommandLine),
+		CommandLine:    proto.String(commandLine),
 		TestReferences: TestReferences,
-		Cwd:            proto.String(Cwd),
-		Os:             proto.String(Os),
+		Cwd:            proto.String(cwd),
+		Os:             proto.String(runtime.GOOS),
 	}
 
 	return &internal_user_log.AtestLogEventInternal{
-		UserKey:         proto.String(UserKey),
-		RunId:           proto.String(RunID),
+		UserKey:         proto.String(userKey),
+		RunId:           proto.String(runID),
 		UserType:        &UserType,
 		ToolName:        proto.String(ToolName),
 		Event:           &internal_user_log.AtestLogEventInternal_AtestStartEvent_{AtestStartEvent: atestStartEvent},
@@ -83,7 +91,8 @@ func createAtestLogEventInternal() *internal_user_log.AtestLogEventInternal {
 func main() {
 	log.Printf("-----------------------------------")
 	log.Printf("Welcome to the Cuttlefish Metrics!")
-	logEvent := createAtestLogEventInternal()
+	commandLine := strings.Join(os.Args, " ")
+	logEvent := createAtestLogEventInternal(commandLine)
 	encoded, err := encodeAtestLogEventInternal(logEvent)
 	if err != nil {
 		log.Fatalf("Failed to encode log event: %v", err)
