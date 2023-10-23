@@ -16,10 +16,12 @@
  
  syntax = "proto2";
 
-package cuttlefish;
-
 import "google/protobuf/duration.proto";
-import "common.proto";
+
+enum UserType {
+  GOOGLE = 0;
+  EXTERNAL = 1;
+}
 
 // Proto used by Atest CLI Tool for Internal PII Users
 message AtestLogEventInternal {
