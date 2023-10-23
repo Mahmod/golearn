@@ -24,7 +24,7 @@ func currentTimeMillis() int64 {
 	return time.Now().UnixNano() / int64(time.Millisecond)
 }
 
-func encodeLogRequest(extension string) ([]byte, error) {
+func encodeLogRequest(extension []byte) ([]byte, error) {
 	currentTimeMs := currentTimeMillis()
 	log.Printf("current time = %v", currentTimeMs)
 
@@ -34,7 +34,7 @@ func encodeLogRequest(extension string) ([]byte, error) {
 
 	logEvent := &clientanalytics.LogEvent{
 		EventTimeMs:     proto.Int64(currentTimeMs),
-		SourceExtension: []byte(extension),
+		SourceExtension: extension,
 	}
 
 	req := &clientanalytics.LogRequest{
@@ -58,19 +58,17 @@ var (
 )
 
 
-func encodeAtestLogEventInternal(logEvent *internal_user_log.AtestLogEventInternal) ([]byte, error) {
-	return proto.Marshal(logEvent)
-}
+func createAndEncodeAtestLogEventInternal(commandLine string) ([]byte, error) {
+	// Generate UUIDs for UserKey and RunID
+	userKey := uuid.New().String()
+	runID := uuid.New().String()
 
-func createAtestLogEventInternal(commandLine string) *internal_user_log.AtestLogEventInternal {
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Failed to get current working directory: %v", err)
 	}
 	log.Printf("cwd = %v", cwd)
-	// Generate UUIDs for UserKey and RunID
-	userKey := uuid.New().String()
-	runID := uuid.New().String()
+
 
 	atestStartEvent := &internal_user_log.AtestLogEventInternal_AtestStartEvent{
 		CommandLine:    proto.String(commandLine),
@@ -79,32 +77,30 @@ func createAtestLogEventInternal(commandLine string) *internal_user_log.AtestLog
 		Os:             proto.String(runtime.GOOS),
 	}
 
-	return &internal_user_log.AtestLogEventInternal{
+	logEvent := &internal_user_log.AtestLogEventInternal{
 		UserKey:         proto.String(userKey),
 		RunId:           proto.String(runID),
 		UserType:        &UserType,
 		ToolName:        proto.String(ToolName),
 		Event:           &internal_user_log.AtestLogEventInternal_AtestStartEvent_{AtestStartEvent: atestStartEvent},
 	}
+	return proto.Marshal(logEvent)
 }
+
 
 func main() {
 	log.Printf("-----------------------------------")
 	log.Printf("Welcome to the Cuttlefish Metrics!")
 	commandLine := strings.Join(os.Args, " ")
-	logEvent := createAtestLogEventInternal(commandLine)
-	encoded, err := encodeAtestLogEventInternal(logEvent)
+	encoded, err := createAndEncodeAtestLogEventInternal(commandLine)
 	if err != nil {
 		log.Fatalf("Failed to encode log event: %v", err)
 	}
-	log.Printf("Encoded Log Event: %v", encoded)
-
-	log.Printf("-----------------------------------")
-
-    extension := "source_extension"
-    data, err := encodeLogRequest(extension)
+	//Pass the encoded log event to the encodeLogRequest function
+    data, err := encodeLogRequest(encoded)
     if err != nil {
         log.Fatal("Marshaling error: ", err)
     }
+	log.Printf("Encoded Log Event: %v", encoded)
     log.Printf("Encoded data: %v", data)
 }
