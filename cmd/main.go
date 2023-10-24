@@ -117,7 +117,7 @@ func clearcutServerUrl(server ClearcutServer) string {
 }
 
 func postRequest(output []byte) (error) {
-	clearcutURL := clearcutServerUrl(Local)
+	clearcutURL := clearcutServerUrl(Prod)
 
 	resp, err := http.Post(clearcutURL, "application/json", bytes.NewBuffer(output))
 	if err != nil {
